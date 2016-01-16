@@ -1,5 +1,5 @@
 /**
- * Contains main method to execute application
+ * Contains main method to execute application 
  * 
  * @author Jack Pergantis
  */
