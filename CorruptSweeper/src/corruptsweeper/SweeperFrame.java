@@ -1,7 +1,7 @@
 package corruptsweeper;
 
 // Event listeners
-import java.awt.event.ActionEvent;
+import java.awt.event.ActionEvent; 
 import java.awt.event.ActionListener;
 
 // Swing classes
@@ -24,11 +24,11 @@ import java.awt.Dimension;
 public class SweeperFrame extends JFrame implements ActionListener {
 	
 	// Define characteristics of the frame
-	private static final String TITLE = "CorruptSweeper";
+	private final String TITLE = "CorruptSweeper";
 	private final int MAP_WIDTH = 310;
 	private final int MAP_LENGTH = 318;
-	private final Dimension FRAME_SIZE = new Dimension(MAP_WIDTH, MAP_LENGTH + 55);
-	private static final Point DEFAULT_LOCATION = new Point(0, 0);
+	private final Dimension FRAME_SIZE = new Dimension(MAP_WIDTH, MAP_LENGTH + 70);
+	private final Point DEFAULT_LOCATION = new Point(0, 0);
 	private final BufferedImage SPLASH_SCREEN = getSplash();
 	
 	// Define swing elements of the frame
@@ -40,6 +40,7 @@ public class SweeperFrame extends JFrame implements ActionListener {
 	// Variables used to capture, update, and store the map and its location
 	private MapFinder mapFinder = new MapFinder();
 	private Point mapLoc;
+	private Point mapXLoc;
 
 	/**
 	 * Default constructor
@@ -53,7 +54,7 @@ public class SweeperFrame extends JFrame implements ActionListener {
 		mainPanel = new JPanel();
 		setAlwaysOnTop(true);
 		setResizable(false);
-		setUndecorated(true);
+		setUndecorated(false);
 		
 		// Adds "find map" and "update map" buttons
 		buttonPanel = new JPanel();
@@ -76,16 +77,21 @@ public class SweeperFrame extends JFrame implements ActionListener {
 	}
 	
 	/**
-	 * updates and returns the location of the map
 	 * @return the location of the map
 	 */
 	public Point getMapLoc() {
-		mapLoc = mapFinder.findMap();
 		return mapLoc;
 	}	
 	
 	/**
-	 * 
+	 * @return the location of the x
+	 */
+	public Point getMapXLoc() {
+		return mapXLoc;
+	}
+	
+	/**
+	 * updates the displayed image of the map
 	 */
 	public void updateMap(ImageIcon i) {
 		mapLabel.setIcon(i);
@@ -100,6 +106,7 @@ public class SweeperFrame extends JFrame implements ActionListener {
 		if (e.getActionCommand().equals("find")) {
 			try {
 				mapLoc = mapFinder.findMap();
+				mapXLoc = mapFinder.findMapX();
 			}
 			catch (NullPointerException npe) {
 				// Map not found
