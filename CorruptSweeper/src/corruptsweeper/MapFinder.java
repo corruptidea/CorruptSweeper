@@ -31,6 +31,28 @@ public class MapFinder {
 		}
 		Point mapXLoc = fullscreen.find(imageTarget).getBounds().getLocation();		
 		Point mapLoc = new Point(mapXLoc.x - deltaX, mapXLoc.y - deltaY);
+		if (mapLoc != null) {
+			System.out.println("map at " + mapLoc);
+		}
 		return mapLoc;
+	}
+	
+	/**
+	 * @return a Point representing the top left corner of the "x"
+	 */
+	public Point findMapX() {
+		ScreenRegion fullscreen = new DesktopScreenRegion(); // Currently works on default monitor only!
+		Target imageTarget = null;
+		try {
+			imageTarget = new ImageTarget(ImageIO.read(getClass().getResource("/resources/MapX.png")));
+		} 
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		Point mapXLoc = fullscreen.find(imageTarget).getBounds().getLocation();	
+		if (mapXLoc != null) {
+			System.out.println("mapx at " + mapXLoc);
+		}
+		return mapXLoc;
 	}
 }
