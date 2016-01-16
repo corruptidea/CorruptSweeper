@@ -31,7 +31,7 @@ public class SweeperRunner {
 		new SweeperRunner();
 	}
 	
-	public SweeperRunner() {
+	public SweeperRunner() { 
 		sf = new SweeperFrame();		
 		try {
 			mapX = new ImageTarget(ImageIO.read(getClass().getResource("/resources/MapX.png")));
