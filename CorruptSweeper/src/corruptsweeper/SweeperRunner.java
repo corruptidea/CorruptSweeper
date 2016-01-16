@@ -1,3 +1,9 @@
+/**
+ * Contains main method to execute application
+ * 
+ * @author Jack Pergantis
+ */
+
 package corruptsweeper;
 
 public class SweeperRunner {	
