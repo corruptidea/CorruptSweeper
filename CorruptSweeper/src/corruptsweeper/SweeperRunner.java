@@ -4,7 +4,7 @@
  * @author Jack Pergantis
  */
 
-package corruptsweeper;
+package corruptsweeper; 
 
 import java.io.IOException;
 
