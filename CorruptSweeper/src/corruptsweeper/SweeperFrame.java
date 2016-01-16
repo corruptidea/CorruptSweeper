@@ -9,7 +9,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
 import javax.swing.JButton;
-import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 
 // Image and image management classes
@@ -33,20 +32,15 @@ public class SweeperFrame extends JFrame implements ActionListener {
 	private final BufferedImage SPLASH_SCREEN = getSplash();
 	
 	// Define swing elements of the frame
-	private JPanel mainPanel;
-	
-	private JPanel mapPanel;
-	private JLabel mapLabel;
-	
+	private JPanel mainPanel;	
 	private JPanel buttonPanel;
-	private JButton updateMap;
 	private JButton findMap;
+	private JLabel mapLabel;	
 	
 	// Variables used to capture, update, and store the map and its location
-	private MapCapturer mapCapturer = new MapCapturer();
 	private MapFinder mapFinder = new MapFinder();
 	private Point mapLoc;
-	
+
 	/**
 	 * Default constructor
 	 */
@@ -68,12 +62,7 @@ public class SweeperFrame extends JFrame implements ActionListener {
 		findMap.setActionCommand("find");
 		findMap.addActionListener(this);
 		buttonPanel.add(findMap);
-		
-		updateMap = new JButton("Update Map");
-		updateMap.setActionCommand("update");
-		updateMap.addActionListener(this);
-		buttonPanel.add(updateMap);
-						
+								
 		// Adds JLabel to display map
 		mapLabel = new JLabel(new ImageIcon(SPLASH_SCREEN));
 		
@@ -83,7 +72,39 @@ public class SweeperFrame extends JFrame implements ActionListener {
 		add(mainPanel);
 		
 		// Shows the frame
-		setVisible(true);		
+		setVisible(true);
+	}
+	
+	/**
+	 * updates and returns the location of the map
+	 * @return the location of the map
+	 */
+	public Point getMapLoc() {
+		mapLoc = mapFinder.findMap();
+		return mapLoc;
+	}	
+	
+	/**
+	 * 
+	 */
+	public void updateMap(ImageIcon i) {
+		mapLabel.setIcon(i);
+		repaint();
+	}
+
+	/**
+	 * ActionListener interface methods
+	 */	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (e.getActionCommand().equals("find")) {
+			try {
+				mapLoc = mapFinder.findMap();
+			}
+			catch (NullPointerException npe) {
+				// Map not found
+			}
+		}
 	}
 	
 	/**
@@ -99,30 +120,9 @@ public class SweeperFrame extends JFrame implements ActionListener {
 			System.out.println("Cannot read input file");
 			e.printStackTrace();
 		}
-		// If returns null
-		catch(NullPointerException e) {
-			System.out.println("File not found");
-			e.printStackTrace();
-		}
 		return new BufferedImage(0, 0, BufferedImage.TYPE_INT_RGB);
 	}
 	
-	/**
-	 * MouseListener interface methods
-	 */	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if (e.getActionCommand().equals("update")) {	
-			mapLabel.setIcon(new ImageIcon(mapCapturer.getMap(mapLoc)));
-			repaint();
-		}
-		if (e.getActionCommand().equals("find")) {
-			try {
-				mapLoc = mapFinder.findMap();
-			}
-			catch (NullPointerException npe) {
-				// Map not found
-			}
-		}
-	}
+
+		
 }
