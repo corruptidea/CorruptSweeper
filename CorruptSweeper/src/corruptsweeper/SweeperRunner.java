@@ -10,9 +10,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
-
 import org.sikuli.api.*;
-import org.sikuli.api.event.*;
 
 public class SweeperRunner {	
 	
@@ -20,48 +18,34 @@ public class SweeperRunner {
 	
 	// Variables used to capture, update, and store the map and its location
 	private MapCapturer mapCapturer = new MapCapturer();
-	private MapFinder mapFinder = new MapFinder();
-	private Target mapX;
-	private ScreenRegion mapXListenerRegion;
+	private Target mapX; 
 	/**
 	 * Main method to run the program 
 	 * @param args the command line arguments
+	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) {
-		new SweeperRunner();
+	public static void main(String[] args) throws InterruptedException {
+		new SweeperRunner();		
 	}
 	
-	public SweeperRunner() { 
-		sf = new SweeperFrame();		
+	public SweeperRunner() throws InterruptedException { 
+		sf = new SweeperFrame();
+		while (sf.getMapXLoc() == null) {
+			Thread.sleep(1);
+		}
+		System.out.println("biggles");
 		try {
 			mapX = new ImageTarget(ImageIO.read(getClass().getResource("/resources/MapX.png")));
 		} 
 		catch (IOException e) {
 			e.printStackTrace();
 		}
-		mapX.setMinScore(1.00);
-		mapXListenerRegion = new DesktopScreenRegion(mapFinder.findMapX().x, mapFinder.findMapX().y, 16, 16); //TODO - use variables
-		mapXListenerRegion.addTargetEventListener(mapX, listener);
+		ScreenRegion searchable = new DesktopScreenRegion(sf.getMapXLoc().x, sf.getMapXLoc().y, 16, 16);
+		while (true) {
+			if (searchable.find(mapX) != null) {
+				sf.updateMap(new ImageIcon(mapCapturer.getMap(sf.getMapLoc())));
+				Thread.sleep(100);
+			}
+		}
 	}
-	
-	/**
-	 * Creates a TargetEventListener to automatically update the map when the "x" is detected in the location designated by sf.getMapLoc()
-	 */
-	TargetEventListener listener = new TargetEventListener() {       				
-		@Override
-		public void targetAppeared(TargetEvent event) {
-			System.out.println("Target found! Attempting to update...");
-			sf.updateMap(new ImageIcon(mapCapturer.getMap(sf.getMapLoc())));
-		}
-
-		@Override
-		public void targetMoved(TargetEvent event) {
-			// Nothing required, implementation required by interface
-		}
-
-		@Override
-		public void targetVanished(TargetEvent event) {
-			// Nothing required, implementation required by interface
-		}
-	};
 }
