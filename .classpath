@@ -3,5 +3,6 @@
 	<classpathentry kind="src" path="CorruptSweeper/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="D:/Downloads/sikuli-api-1.0.2-standalone.jar"/>
+	<classpathentry kind="lib" path="D:/Downloads/JNativeHook/jar/jnativehook-2.0.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
