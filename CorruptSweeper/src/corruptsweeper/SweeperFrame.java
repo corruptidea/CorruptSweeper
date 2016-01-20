@@ -10,16 +10,23 @@ package corruptsweeper;
 // Event listeners
 import java.awt.event.ActionEvent; 
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 import org.jnativehook.mouse.NativeMouseEvent;
 import org.jnativehook.mouse.NativeMouseListener;
 
 // Swing classes
+import java.awt.Component;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.JLabel;
 import javax.swing.JButton;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 
 // Image and image management classes
@@ -32,7 +39,9 @@ import java.awt.image.BufferedImage;
 
 // Other
 import java.awt.Point;
+
 import java.awt.Dimension;
+import java.awt.LayoutManager;
 
 // Sikuli
 import org.sikuli.api.*;
@@ -49,7 +58,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	private final String TITLE = "CorruptSweeper";
 	private final int MAP_WIDTH = 310;
 	private final int MAP_LENGTH = 318;
-	private final Dimension FRAME_SIZE = new Dimension(MAP_WIDTH, MAP_LENGTH + 70);
+	private final Dimension FRAME_SIZE = new Dimension(MAP_WIDTH + 10, MAP_LENGTH + 40);
 	private final Point DEFAULT_LOCATION = new Point(0, 0);
 	private final BufferedImage SPLASH_SCREEN = getSplash();
 	
@@ -59,6 +68,8 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	private JPanel buttonPanel;
 	private JButton findMap;
 	private JLabel mapLabel;	
+	private int posX;
+	private int posY;
 	
 	// Define variables used to capture, update, and store the map and its location
 	private MapFinder mapFinder;
@@ -73,6 +84,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	 */
 	public SweeperFrame() {
 		
+		// Sets up and registers global event listeners
 		GlobalScreen.setEventDispatcher(new SwingDispatchService());
 		
 		Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
@@ -82,7 +94,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
             GlobalScreen.registerNativeHook();
         }
         catch (NativeHookException ex) {
-            System.out.println("There was a problem registering the native hook.");
+            System.out.println("There was a problem registering the snative hook.");
             System.out.println(ex.getMessage());
             ex.printStackTrace();
             System.exit(1);
@@ -100,10 +112,12 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		setAlwaysOnTop(true);
 		setResizable(false);
 		setUndecorated(true);
+		makeDraggable();
 
 		
 		// Adds "find map" button
 		buttonPanel = new JPanel();
+		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
 		
 		findMap = new JButton("Find Map");
 		findMap.setActionCommand("find");
@@ -116,10 +130,25 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		mapPanel.add(mapLabel);
 		
 		// Adds panels to frame
+		mainPanel.setLayout(null); // Absolute layout
 		mainPanel.add(mapPanel);
 		mainPanel.add(buttonPanel);
+		Dimension d;
+		d = mapPanel.getPreferredSize();
+		mapPanel.setBounds(0, 0, d.width, d.height);
+		d = buttonPanel.getPreferredSize();
+		buttonPanel.setBounds((mapPanel.getPreferredSize().width / 2) - (buttonPanel.getPreferredSize().width / 2), // Centered below mapPanel
+				mapPanel.getPreferredSize().height, d.width, d.height);
+				
 		add(mainPanel);
 		
+		// Look and feel
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
+				| UnsupportedLookAndFeelException e1) {
+			e1.printStackTrace();
+		}
 		// Instantiates necessary utilities
 		try {
 			mapX = new ImageTarget(ImageIO.read(getClass().getResource("/resources/MapX.png"))); // Image target to search for when updating
@@ -132,8 +161,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		mapCapturer = new MapCapturer();
 		
 		// Shows the frame
-		setVisible(true);
-		
+		setVisible(true);		
 	}
 	
 	/**
@@ -157,7 +185,46 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		mapLabel.setIcon(i);
 		repaint();
 	}
+	
+	/**
+	 * Allows the frame to be draggable
+	 */
+	public void makeDraggable() {
+		this.addMouseListener(new MouseAdapter()
+		{
+		   public void mousePressed(MouseEvent e)
+		   {
+		      posX = e.getX();
+		      posY = e.getY();
+		   }
+		});
+		this.addMouseMotionListener(new MouseAdapter()
+		{
+		     public void mouseDragged(MouseEvent evt)
+		     {
+				//sets frame position when mouse dragged			
+				setLocation (evt.getXOnScreen()-posX,evt.getYOnScreen()-posY);
+							
+		     }
+		});
+	}
 
+	/**
+	 * Gets the default splash screen to be displayed before map is first opened
+	 * @return the default splash screen
+	 */
+	public BufferedImage getSplash() {		
+		try {
+			return ImageIO.read(getClass().getResource("/resources/CorruptSweeperSplash.png"));
+		}
+		// If resource file is not an image
+		catch(IOException e) {
+			System.out.println("Cannot read input file");
+			e.printStackTrace();
+		}
+		return new BufferedImage(0, 0, BufferedImage.TYPE_INT_RGB);
+	}
+	
 	/**
 	 * ActionListener interface methods
 	 */	
@@ -176,39 +243,27 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		}
 	}
 	
+	
 	/**
-	 * Gets the default splash screen to be displayed before map is first opened
-	 * @return the default splash screen
+	 * NativeMouseListener interface methods
 	 */
-	public BufferedImage getSplash() {		
-		try {
-			return ImageIO.read(getClass().getResource("/resources/CorruptSweeperSplash.png"));
-		}
-		// If resource file is not an image
-		catch(IOException e) {
-			System.out.println("Cannot read input file");
-			e.printStackTrace();
-		}
-		return new BufferedImage(0, 0, BufferedImage.TYPE_INT_RGB);
-	}
-
 	@Override
 	public void nativeMouseClicked(NativeMouseEvent e) {
 		// Nothing required, implementation required by NativeMouseListener interface	
 	}
-
+	
 	@Override
 	public void nativeMousePressed(NativeMouseEvent e) {
 		if (e.getButton() == NativeMouseEvent.BUTTON1) { // Only search if left button is clicked
 			try {
-				Thread.sleep(600); // Waits 1 tick for map to appear
+				Thread.sleep(720); // Waits ~1 tick for map to appear
 			} catch (InterruptedException ie) {
 				System.out.println("Sleep thread interrupted");
 				ie.printStackTrace();
 			}
 			if (searchable.find(mapX) != null) {
 				try {
-					updateMap(new ImageIcon(mapCapturer.getMap(getMapLoc())));
+					BufferedImage map = mapCapturer.getMap(getMapLoc());
 				}
 				catch (NullPointerException npe) {
 					// Map not found
@@ -222,11 +277,15 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		// Nothing required, implementation required by NativeMouseListener interface		
 	}
 
+	
+	/**
+	 * NativeKeyListener interface methods
+	 */
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent e) {	
 		if (e.getKeyCode() == NativeKeyEvent.VC_M) { // Only searches for map if key pressed is "m" - TODO Allow for variable map keys
 			try {
-				Thread.sleep(600); // Waits 1 tick for map to appear
+				Thread.sleep(720); // Waits ~1 tick for map to appear
 			} catch (InterruptedException ie) {
 				System.out.println("Sleep thread interrupted");				
 				ie.printStackTrace();
