@@ -24,18 +24,20 @@ import javax.swing.ImageIcon;
 
 // Image and image management classes
 import java.io.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 
 // Other
 import java.awt.Point;
 import java.awt.Dimension;
-import java.awt.Image;
 
 // Sikuli
 import org.sikuli.api.*;
 
-// JNativeHook
+// Other JNativeHook classes
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.SwingDispatchService;
@@ -71,22 +73,24 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	 */
 	public SweeperFrame() {
 		
-		 GlobalScreen.setEventDispatcher(new SwingDispatchService());
+		GlobalScreen.setEventDispatcher(new SwingDispatchService());
+		
+		Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+		logger.setLevel(Level.OFF);
 		
 		try {
             GlobalScreen.registerNativeHook();
         }
         catch (NativeHookException ex) {
-            System.err.println("There was a problem registering the native hook.");
-            System.err.println(ex.getMessage());
+            System.out.println("There was a problem registering the native hook.");
+            System.out.println(ex.getMessage());
             ex.printStackTrace();
-
             System.exit(1);
         }
 		
 		GlobalScreen.addNativeKeyListener(this);
 		GlobalScreen.addNativeMouseListener(this);
-		
+	
 		// Sets frame dimensions, location, default close operation, always on top, and resizability
 		setTitle(TITLE);
 		setSize(FRAME_SIZE);
@@ -95,7 +99,8 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		mainPanel = new JPanel();
 		setAlwaysOnTop(true);
 		setResizable(false);
-		setUndecorated(false);
+		setUndecorated(true);
+
 		
 		// Adds "find map" button
 		buttonPanel = new JPanel();
@@ -188,51 +193,62 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	}
 
 	@Override
-	public void nativeMouseClicked(NativeMouseEvent arg0) {
+	public void nativeMouseClicked(NativeMouseEvent e) {
 		// Nothing required, implementation required by NativeMouseListener interface	
 	}
 
 	@Override
-	public void nativeMousePressed(NativeMouseEvent arg0) {
-		try {
-			Thread.sleep(600); // Waits 1 tick for map to appear
-		} catch (InterruptedException e) {
-			System.out.println("Sleep thread interrupted");
-			e.printStackTrace();
-		}
-		if (searchable.find(mapX) != null) {
-			updateMap(new ImageIcon(mapCapturer.getMap(getMapLoc()).getScaledInstance(getWidth() - 10, getHeight() - 75, Image.SCALE_FAST)));
+	public void nativeMousePressed(NativeMouseEvent e) {
+		if (e.getButton() == NativeMouseEvent.BUTTON1) { // Only search if left button is clicked
+			try {
+				Thread.sleep(600); // Waits 1 tick for map to appear
+			} catch (InterruptedException ie) {
+				System.out.println("Sleep thread interrupted");
+				ie.printStackTrace();
+			}
+			if (searchable.find(mapX) != null) {
+				try {
+					updateMap(new ImageIcon(mapCapturer.getMap(getMapLoc())));
+				}
+				catch (NullPointerException npe) {
+					// Map not found
+				}
+			}
 		}
 	}
 
 	@Override
-	public void nativeMouseReleased(NativeMouseEvent arg0) {
+	public void nativeMouseReleased(NativeMouseEvent e) {
 		// Nothing required, implementation required by NativeMouseListener interface		
 	}
 
 	@Override
-	public void nativeKeyPressed(NativeKeyEvent arg0) {
-		try {
-			Thread.sleep(600); // Waits 1 tick for map to appear
-		} catch (InterruptedException e) {
-			System.out.println("Sleep thread interrupted");
-			e.printStackTrace();
+	public void nativeKeyPressed(NativeKeyEvent e) {	
+		if (e.getKeyCode() == NativeKeyEvent.VC_M) { // Only searches for map if key pressed is "m" - TODO Allow for variable map keys
+			try {
+				Thread.sleep(600); // Waits 1 tick for map to appear
+			} catch (InterruptedException ie) {
+				System.out.println("Sleep thread interrupted");				
+				ie.printStackTrace();
+			}
+			if (searchable.find(mapX) != null) {
+				try {
+					updateMap(new ImageIcon(mapCapturer.getMap(getMapLoc())));
+				}
+				catch (NullPointerException npe) {
+					// Map not found
+				}
+			}
 		}
-		if (searchable.find(mapX) != null) {
-			updateMap(new ImageIcon(mapCapturer.getMap(getMapLoc())));
-		}	
 	}
 
 	@Override
-	public void nativeKeyReleased(NativeKeyEvent arg0) {
+	public void nativeKeyReleased(NativeKeyEvent e) {
 		// Nothing required, implementation required by NativeKeyListener interface
 	}
 
 	@Override
-	public void nativeKeyTyped(NativeKeyEvent arg0) {
+	public void nativeKeyTyped(NativeKeyEvent e) {
 		// Nothing required, implementation required by NativeKeyListener interface		
 	}
-	
-
-		
 }
