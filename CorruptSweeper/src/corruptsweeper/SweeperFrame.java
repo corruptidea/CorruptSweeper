@@ -19,7 +19,6 @@ import org.jnativehook.mouse.NativeMouseEvent;
 import org.jnativehook.mouse.NativeMouseListener;
 
 // Swing classes
-import java.awt.Component;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
@@ -37,11 +36,9 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 
-// Other
+// Shape classes
 import java.awt.Point;
-
 import java.awt.Dimension;
-import java.awt.LayoutManager;
 
 // Sikuli
 import org.sikuli.api.*;
@@ -78,6 +75,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	private Point mapXLoc;
 	private ScreenRegion searchable;
 	private Target mapX;
+	private BufferedImage mapXBI;
 	
 	/**
 	 * Default constructor
@@ -152,6 +150,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		// Instantiates necessary utilities
 		try {
 			mapX = new ImageTarget(ImageIO.read(getClass().getResource("/resources/MapX.png"))); // Image target to search for when updating
+			mapXBI = ImageIO.read(getClass().getResource("/resources/MapX.png"));
 		} 
 		catch (IOException e) {
 			e.printStackTrace();
@@ -264,9 +263,15 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 			if (searchable.find(mapX) != null) {
 				try {
 					BufferedImage map = mapCapturer.getMap(getMapLoc());
+					BufferedImage mapX = mapCapturer.getMapX(getMapXLoc());
+					BufferedImageComparator bic = new BufferedImageComparator();
+					// Compare images to verify capture is actually of the map
+					if (bic.compare(mapX, mapXBI) == 1) {
+						updateMap(new ImageIcon(map));
+					}	
 				}
 				catch (NullPointerException npe) {
-					// Map not found
+				// Map not found
 				}
 			}
 		}
@@ -292,8 +297,15 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 			}
 			if (searchable.find(mapX) != null) {
 				try {
-					updateMap(new ImageIcon(mapCapturer.getMap(getMapLoc())));
-				}
+					BufferedImage map = mapCapturer.getMap(getMapLoc());
+					BufferedImage mapX = mapCapturer.getMapX(getMapXLoc());
+					BufferedImageComparator bic = new BufferedImageComparator();
+					// Compare images to verify capture is actually of the map
+					if (bic.compare(mapX, mapXBI) == 1) {
+						updateMap(new ImageIcon(map));
+					}
+		
+				}					
 				catch (NullPointerException npe) {
 					// Map not found
 				}
