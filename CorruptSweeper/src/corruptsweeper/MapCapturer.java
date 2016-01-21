@@ -19,6 +19,7 @@ public class MapCapturer {
 	
 	private final int MAP_LENGTH = 310;
 	private final int MAP_WIDTH = 318;
+	private final int MAP_X_SIDE_LENGTH = 16;
 	
 	// BufferedImage of the map to be returned
 	private BufferedImage mapImg;
@@ -29,7 +30,15 @@ public class MapCapturer {
 	 * @return the BufferedImage of the map
 	 */
 	public BufferedImage getMap(Point loc) {	
-		mapImg = new DesktopScreenRegion(loc.x, loc.y, MAP_WIDTH, MAP_LENGTH).capture();
-		return mapImg;
+		return new DesktopScreenRegion(loc.x, loc.y, MAP_WIDTH, MAP_LENGTH).capture();
 	}	
+	
+	/**
+	 * Capture an image of the mapX
+	 * @param loc the top left corner of the mapX
+	 * @return the BufferedImage of the mapX
+	 */
+	public BufferedImage getMapX(Point loc) {	
+		return new DesktopScreenRegion(loc.x, loc.y, MAP_X_SIDE_LENGTH, MAP_X_SIDE_LENGTH).capture();
+	}
 }
