@@ -1,3 +1,7 @@
+/**
+ * Used to compare 2 BufferedImages for similarity
+ */
+
 package corruptsweeper;
 
 import java.awt.image.BufferedImage;
@@ -8,6 +12,7 @@ import java.util.Comparator;
 
 public class BufferedImageComparator implements Comparator<BufferedImage> {
 
+	// TODO Make this something other than a glorified .equals function
 	@Override
 	public int compare(BufferedImage a, BufferedImage b) {
 		DataBuffer dbA = a.getRaster().getDataBuffer();
