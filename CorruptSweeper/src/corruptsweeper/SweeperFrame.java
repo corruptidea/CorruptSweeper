@@ -1,7 +1,6 @@
 /**
- * The SweeperFrame class displays the captured map
+ * The SweeperFrame class captures and displays the map
  * 
- *  TODO Allow size to be adjusted
  *  @author Jack Pergantis
  */
 
@@ -12,7 +11,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 import org.jnativehook.mouse.NativeMouseEvent;
@@ -27,6 +25,8 @@ import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.Timer;
+import java.awt.Color;
 
 // Image and image management classes
 import java.io.*;
@@ -43,6 +43,8 @@ import java.awt.Dimension;
 // Sikuli
 import org.sikuli.api.*;
 
+
+
 // Other JNativeHook classes
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
@@ -53,9 +55,10 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	
 	// Define characteristics of the frame
 	private final String TITLE = "CorruptSweeper";
+	private final Color RS3_BLUE = new Color(9,34,47);
 	private final int MAP_WIDTH = 310;
 	private final int MAP_LENGTH = 318;
-	private final Dimension FRAME_SIZE = new Dimension(MAP_WIDTH + 10, MAP_LENGTH + 40);
+	private final Dimension FRAME_SIZE = new Dimension(MAP_WIDTH + 17, MAP_LENGTH + 40);
 	private final Point DEFAULT_LOCATION = new Point(0, 0);
 	private final BufferedImage SPLASH_SCREEN = getSplash();
 	
@@ -64,7 +67,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	private JPanel mapPanel;
 	private JPanel buttonPanel;
 	private JButton findMap;
-	private JLabel mapLabel;	
+	private JLabel mapLabel;
 	private int posX;
 	private int posY;
 	
@@ -76,28 +79,28 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	private ScreenRegion searchable;
 	private Target mapX;
 	private BufferedImage mapXBI;
+	private boolean ready;
+	private Timer t;
+	
 	
 	/**
-	 * Default constructor
+	 * Constructor
 	 */
 	public SweeperFrame() {
 		
 		// Sets up and registers global event listeners
-		GlobalScreen.setEventDispatcher(new SwingDispatchService());
-		
-		Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-		logger.setLevel(Level.OFF);
-		
+		GlobalScreen.setEventDispatcher(new SwingDispatchService());		
+		Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName()); // Disables logging of events to slightly improve performance
+		logger.setLevel(Level.OFF);		
 		try {
             GlobalScreen.registerNativeHook();
         }
         catch (NativeHookException ex) {
-            System.out.println("There was a problem registering the snative hook.");
+            System.out.println("There was a problem registering the native hook.");
             System.out.println(ex.getMessage());
             ex.printStackTrace();
             System.exit(1);
-        }
-		
+        }	
 		GlobalScreen.addNativeKeyListener(this);
 		GlobalScreen.addNativeMouseListener(this);
 	
@@ -107,11 +110,11 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		setLocation(DEFAULT_LOCATION);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainPanel = new JPanel();
+		mainPanel.setBackground(RS3_BLUE);
 		setAlwaysOnTop(true);
 		setResizable(false);
 		setUndecorated(true);
 		makeDraggable();
-
 		
 		// Adds "find map" button
 		buttonPanel = new JPanel();
@@ -124,6 +127,8 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 								
 		// Adds JLabel to display map
 		mapPanel = new JPanel();
+		mapPanel.setBounds(0, 0, MAP_WIDTH, MAP_LENGTH);
+		mapPanel.setBackground(RS3_BLUE);
 		mapLabel = new JLabel(new ImageIcon(SPLASH_SCREEN));
 		mapPanel.add(mapLabel);
 		
@@ -136,31 +141,49 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 		mapPanel.setBounds(0, 0, d.width, d.height);
 		d = buttonPanel.getPreferredSize();
 		buttonPanel.setBounds((mapPanel.getPreferredSize().width / 2) - (buttonPanel.getPreferredSize().width / 2), // Centered below mapPanel
-				mapPanel.getPreferredSize().height, d.width, d.height);
-				
+				mapPanel.getPreferredSize().height, d.width, d.height);				
 		add(mainPanel);
 		
-		// Look and feel
+		// Assigns look and feel
+		setLookAndFeel();
+		
+		// Instantiates necessary utilities
+		instantiateUtilities();
+		
+		// Shows the frame
+		setVisible(true);		
+	}
+	
+	// Sets the look and feel to that of the host OS
+	private void setLookAndFeel() {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException
 				| UnsupportedLookAndFeelException e1) {
 			e1.printStackTrace();
-		}
-		// Instantiates necessary utilities
+		}	
+	}
+	
+	// Instantiates necessary map capturing objects
+	private void instantiateUtilities() {
 		try {
 			mapX = new ImageTarget(ImageIO.read(getClass().getResource("/resources/MapX.png"))); // Image target to search for when updating
-			mapXBI = ImageIO.read(getClass().getResource("/resources/MapX.png"));
+			mapXBI = ImageIO.read(getClass().getResource("/resources/MapX.png")); // Used for comparison to verify map picture
 		} 
-		catch (IOException e) {
+		catch (IOException e) { // If file not found (should not occur because they are packaged in jar)
 			e.printStackTrace();
 		}
 		
 		mapFinder = new MapFinder();
 		mapCapturer = new MapCapturer();
 		
-		// Shows the frame
-		setVisible(true);		
+		// Timer is used to prevent attempts to update the map too frequently
+		t = new Timer(500 /* half second */, new ActionListener() { 
+			public void actionPerformed(ActionEvent A) {
+				ready = true;
+			}
+		});
+		t.start();
 	}
 	
 	/**
@@ -253,6 +276,8 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	
 	@Override
 	public void nativeMousePressed(NativeMouseEvent e) {
+		if (ready) {
+			ready = false;
 		if (e.getButton() == NativeMouseEvent.BUTTON1) { // Only search if left button is clicked
 			try {
 				Thread.sleep(720); // Waits ~1 tick for map to appear
@@ -275,6 +300,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 				}
 			}
 		}
+		}
 	}
 
 	@Override
@@ -288,6 +314,8 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	 */
 	@Override
 	public void nativeKeyPressed(NativeKeyEvent e) {	
+		if (ready) {
+			ready = false;
 		if (e.getKeyCode() == NativeKeyEvent.VC_M) { // Only searches for map if key pressed is "m" - TODO Allow for variable map keys
 			try {
 				Thread.sleep(720); // Waits ~1 tick for map to appear
@@ -304,12 +332,12 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 					if (bic.compare(mapX, mapXBI) == 1) {
 						updateMap(new ImageIcon(map));
 					}
-		
 				}					
 				catch (NullPointerException npe) {
 					// Map not found
 				}
 			}
+		}
 		}
 	}
 
@@ -321,5 +349,7 @@ public class SweeperFrame extends JFrame implements ActionListener, NativeKeyLis
 	@Override
 	public void nativeKeyTyped(NativeKeyEvent e) {
 		// Nothing required, implementation required by NativeKeyListener interface		
-	}
+	}	
+	
+	
 }
