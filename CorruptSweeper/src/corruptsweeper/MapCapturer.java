@@ -21,9 +21,6 @@ public class MapCapturer {
 	private final int MAP_WIDTH = 318;
 	private final int MAP_X_SIDE_LENGTH = 16;
 	
-	// BufferedImage of the map to be returned
-	private BufferedImage mapImg;
-	
 	/**
 	 * Capture an image of the map to display 
 	 * @param loc the top left corner of the map
