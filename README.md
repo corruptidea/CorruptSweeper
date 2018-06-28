@@ -1,3 +1,5 @@
+Update: This project is obsolete with the always-on map feature
+
 <h1>CorruptSweeper</h1>
 ==============
 
